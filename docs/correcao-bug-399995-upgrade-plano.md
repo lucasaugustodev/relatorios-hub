@@ -2,7 +2,7 @@
 
 **Data:** 2026-03-12
 **Bug:** #399995
-**Status:** CORRIGIDO E TESTADO (35/35 testes passando)
+**Status:** CORRIGIDO E TESTADO (52/52 testes passando)
 
 ---
 
@@ -33,9 +33,11 @@ O filtro capturava `renegociacao` + `entrada_renegociacao` = **principal inteiro
 
 ---
 
-## 2. Alteracao aplicada
+## 2. Alteracoes aplicadas
 
-### Arquivo: `src/services/mudancaPlanoService.ts` — `calcularAlteracao()` (L367-378)
+### 2.1. Arquivo: `src/services/mudancaPlanoService.ts` — `calcularAlteracao()` (L367-378)
+
+#### ACORDOS_NAO_QUITADOS — filtro corrigido
 
 **Antes:**
 ```typescript
@@ -72,11 +74,35 @@ const ACORDOS_NAO_QUITADOS = (parcelas || [])
   }, 0);
 ```
 
+### 2.2. Arquivo: `src/services/mudancaPlanoService.ts` — `calcularAlteracao()` (L336-340)
+
+#### PRINCIPAL_QUITADO — parcelas de renegociacao pagas agora contam como credito
+
+**Antes:**
+```typescript
+// PRINCIPAL_QUITADO = soma das parcelas pagas (normal, estendido, arrecadacao)
+const PRINCIPAL_QUITADO = parcelasPagas
+  .filter(p => ['normal', 'estendido', 'arrecadacao'].includes(p.tipo || 'normal'))
+  .reduce((sum, p) => sum + parseFloat(p.valor || '0'), 0);
+```
+
+**Depois:**
+```typescript
+// PRINCIPAL_QUITADO = soma das parcelas pagas que representam principal
+// Inclui: normal, estendido, arrecadacao, renegociacao, entrada_renegociacao
+// NÃO inclui: taxa_renegociacao (juros/multas, não é principal)
+const PRINCIPAL_QUITADO = parcelasPagas
+  .filter(p => ['normal', 'estendido', 'arrecadacao', 'renegociacao', 'entrada_renegociacao'].includes(p.tipo || 'normal'))
+  .reduce((sum, p) => sum + parseFloat(p.valor || '0'), 0);
+```
+
+**Por que:** Parcelas tipo `renegociacao` e `entrada_renegociacao` representam o principal reestruturado. Se o formando pagou essas parcelas, esse valor e principal quitado e deve gerar credito. Sem essa correcao, formandos como Maria Joaquina (R$ 448,80 pago) e Izadora (R$ 467,71 pago) tinham `valor_pago_plano_antigo = 0`.
+
 ---
 
-## 3. Resultado dos testes (35/35 passaram)
+## 3. Resultado dos testes (52/52 passaram)
 
-### Filtro corrigido vs bugado
+### ACORDOS_NAO_QUITADOS — filtro corrigido
 | Teste | Resultado |
 |-------|-----------|
 | BUGADO captura principal (R$ 25.628) | PASS |
@@ -87,8 +113,6 @@ const ACORDOS_NAO_QUITADOS = (parcelas || [])
 |-------|-----------|
 | MULTA = 15% x 25.628,01 = R$ 3.844,20 | PASS |
 | ACORDOS = R$ 954,56 (apenas taxa) | PASS |
-| SALDO_BASE = R$ 3.844,20 | PASS |
-| PENDENCIAS = R$ 954,56 | PASS |
 | DEBITO = R$ 4.798,76 (era R$ 29.472,20) | PASS |
 | Tipo = FORMANDO_PAGA | PASS |
 
@@ -103,7 +127,7 @@ const ACORDOS_NAO_QUITADOS = (parcelas || [])
 | Teste | Resultado |
 |-------|-----------|
 | Taxa paga: ACORDOS = 0 | PASS |
-| Taxa parcial (R$ 800, R$ 300 pago): ACORDOS = R$ 500 | PASS |
+| Taxa parcial: ACORDOS = R$ 500 (saldo restante) | PASS |
 
 ### Cenarios complexos
 | Teste | Resultado |
@@ -111,8 +135,16 @@ const ACORDOS_NAO_QUITADOS = (parcelas || [])
 | Formando com 3 parcelas pagas + taxa pendente | PASS |
 | Downgrade sem multa: credito correto | PASS |
 | 2 renegociacoes: so taxa pendente entra | PASS |
-| Parcelas renegociacao vencidas: NAO entram | PASS |
+| Parcelas renegociacao vencidas: NAO entram no ACORDOS | PASS |
 | Taxa vencida: ENTRA corretamente | PASS |
+
+### PRINCIPAL_QUITADO — parcelas renegociacao pagas
+| Teste | Resultado |
+|-------|-----------|
+| Caso Maria Joaquina: entrada_reneg + reneg pagas = R$ 448,80 | PASS |
+| Caso Izadora: normal + entrada_reneg pagas = R$ 467,71 | PASS |
+| taxa_renegociacao paga NAO conta como principal | PASS |
+| Regressao: parcelas normais pagas = credito | PASS |
 
 ### Caso real Ingrid (taxa 40%)
 | Teste | Resultado |
