@@ -53,21 +53,32 @@ const ACORDOS_NAO_QUITADOS = (parcelas || [])
   }, 0);
 ```
 
-**O filtro esta correto** — pega apenas parcelas tipo `renegociacao` e `entrada_renegociacao`. O problema e que a renegociacao cria parcelas que incluem o **principal reestruturado completo**, nao apenas juros/multas.
+**O filtro pega os tipos errados.** A renegociacao (`renegociacaoService.ts`) cria 3 tipos de parcela:
+
+| Tipo | Linha | O que e |
+|------|-------|---------|
+| `taxa_renegociacao` | L535 | **Juros e multas negociados** (o "acordo" real) |
+| `entrada_renegociacao` | L701 | Primeira parcela do **principal reestruturado** |
+| `renegociacao` | L701 | Demais parcelas do **principal reestruturado** |
+
+O filtro captura `renegociacao` + `entrada_renegociacao` = **principal reestruturado** (o mesmo dinheiro que ja esta em `A_valorPlano`). NAO captura `taxa_renegociacao` (os juros/multas reais).
+
+**Resultado: captura exatamente o contrario do que deveria.**
 
 #### Prova via backup (Aninha Trindade)
 
 O backup das parcelas canceladas pelo upgrade mostra os tipos ORIGINAIS:
 
-| Tipo Original | Qtd | Soma | Observacao |
+| Tipo Original | Qtd | Soma | O que e |
 |---|---|---|---|
-| `entrada_renegociacao` | 1 | R$ 596,00 | Entrada da renegociacao |
-| `renegociacao` | 42 | R$ 25.032,00 | **Principal reestruturado** |
-| `taxa_renegociacao` | 1 | R$ 954,56 | Taxa (NAO capturada pelo filtro) |
+| `entrada_renegociacao` | 1 | R$ 596,00 | Principal reestruturado (CAPTURADO) |
+| `renegociacao` | 42 | R$ 25.032,00 | Principal reestruturado (CAPTURADO) |
+| `taxa_renegociacao` | 1 | R$ 954,56 | Juros/multas reais (NAO CAPTURADO) |
 
 O filtro captura: R$ 596 + R$ 25.032 = **R$ 25.628** ← exatamente o valor no JSON!
+O acordo real (juros/multas) de R$ 954,56 **nao e capturado**.
 
-Essas 42 parcelas de renegociacao representam o **pagamento normal reestruturado** do plano antigo (R$ 25.628,01). No contexto de rescisao, faz sentido contar como divida pendente. Mas no contexto de **upgrade**, essas parcelas serao CANCELADAS junto com o contrato antigo — conta-las como divida e **dupla cobranca**.
+O formando paga o principal do plano antigo DUAS VEZES: uma vez como `ACORDOS_NAO_QUITADOS` no debito, e outra vez embutido no preco integral do plano novo.
 
 O formando acaba pagando:
 1. O valor INTEGRAL do plano novo (entrada + parcelas)
@@ -264,27 +275,28 @@ A funcao `calcularAlteracao()` busca parcelas com `status === 'pago'` (linha 337
 
 ### O que DEVERIA fazer:
 
-Para upgrade, `ACORDOS_NAO_QUITADOS` **nao deve incluir parcelas de renegociacao que serao canceladas** pelo upgrade. Essas parcelas representam o principal do contrato antigo que esta sendo substituido.
+O `ACORDOS_NAO_QUITADOS` deveria capturar **apenas juros e multas negociados** (`taxa_renegociacao`), nao o principal reestruturado (`renegociacao` / `entrada_renegociacao`):
 
-Opcao A — Zerar ACORDOS para upgrades:
 ```typescript
-// Em calcularAlteracao(), quando tipoAlteracao === 'upgrade':
-const ACORDOS_NAO_QUITADOS = 0; // parcelas serao canceladas pelo upgrade
-```
-
-Opcao B — Incluir so juros/multas reais (tipo `taxa_renegociacao`):
-```typescript
-// Filtrar parcelas que representam APENAS juros/multas negociados
+// CORRECAO: Filtrar apenas taxa_renegociacao (juros/multas reais)
 const ACORDOS_NAO_QUITADOS = (parcelas || [])
   .filter(p => {
     const tipo = p.tipo || 'normal';
-    return ['taxa_renegociacao'].includes(tipo) && // ← so taxa, nao principal
+    return tipo === 'taxa_renegociacao' &&  // ← ANTES: ['renegociacao', 'entrada_renegociacao']
       ['pendente', 'vencido'].includes(p.status);
   })
-  .reduce(...);
+  .reduce((sum, p) => {
+    const valorTotal = parseFloat(p.valor || '0');
+    const valorPago = parseFloat(p.valor_pago || '0');
+    return sum + Math.max(0, valorTotal - valorPago);
+  }, 0);
 ```
 
-A decisao entre A e B depende da regra de negocio: se juros/multas negociados devem ser cobrados no upgrade ou nao.
+Isso faria o calculo correto para Aninha Trindade:
+- ACORDOS_NAO_QUITADOS = R$ 954,56 (taxa real) em vez de R$ 25.628 (principal)
+- DEBITO = R$ 3.844,20 + R$ 954,56 = R$ 4.798,76 em vez de R$ 29.472,20
+
+**Nota:** A mudanca no filtro afeta TANTO upgrade quanto rescisao. Verificar se a rescisao tambem deveria usar `taxa_renegociacao` ou se para rescisao o comportamento atual e correto.
 
 ---
 
