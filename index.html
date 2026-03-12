@@ -68,16 +68,21 @@
     }
     .stats {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: 16px;
       margin-bottom: 32px;
     }
     .stat-card {
       background: #1e293b;
-      border: 1px solid #334155;
+      border: 2px solid #334155;
       border-radius: 12px;
       padding: 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+      user-select: none;
     }
+    .stat-card:hover { border-color: #6366f1; transform: translateY(-1px); }
+    .stat-card.active { border-color: #6366f1; background: #1e2d4a; box-shadow: 0 0 16px rgba(99,102,241,0.2); }
     .stat-card .label {
       font-size: 12px;
       color: #64748b;
@@ -94,6 +99,31 @@
     .stat-card .value.yellow { color: #fbbf24; }
     .stat-card .value.red { color: #f87171; }
     .stat-card .value.blue { color: #60a5fa; }
+    .stat-card .value.purple { color: #a78bfa; }
+    .filter-active-bar {
+      display: none;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      padding: 10px 16px;
+      background: #1e2d4a;
+      border: 1px solid #6366f1;
+      border-radius: 10px;
+      font-size: 13px;
+      color: #a5b4fc;
+    }
+    .filter-active-bar.show { display: flex; }
+    .filter-active-bar button {
+      background: #334155;
+      border: none;
+      color: #94a3b8;
+      padding: 4px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      margin-left: auto;
+    }
+    .filter-active-bar button:hover { background: #475569; color: #f1f5f9; }
     .section-title {
       font-size: 16px;
       font-weight: 600;
@@ -124,7 +154,6 @@
     }
     .report-card:hover {
       border-color: #6366f1;
-      background: #1e293b;
       transform: translateY(-1px);
       box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
     }
@@ -143,6 +172,7 @@
     .report-icon.plan { background: #dbeafe; }
     .report-icon.doc { background: #e0e7ff; }
     .report-icon.finance { background: #fef3c7; }
+    .report-icon.analysis { background: #fce7f3; }
     .report-body {
       flex: 1;
       min-width: 0;
@@ -177,8 +207,9 @@
     .badge.pending { background: #78350f; color: #fcd34d; }
     .badge.info { background: #1e3a5f; color: #93c5fd; }
     .badge.done { background: #064e3b; color: #6ee7b7; }
+    .badge.analysis { background: #4a1d6e; color: #d8b4fe; }
 
-    /* Modal / viewer */
+    /* Modal */
     .modal-overlay {
       display: none;
       position: fixed;
@@ -228,9 +259,7 @@
       justify-content: center;
     }
     .modal-close:hover { background: #475569; color: #f1f5f9; }
-    .modal-body {
-      padding: 24px;
-    }
+    .modal-body { padding: 24px; }
     .modal-body h1 { font-size: 22px; font-weight: 700; margin: 24px 0 12px; color: #f1f5f9; }
     .modal-body h2 { font-size: 18px; font-weight: 600; margin: 20px 0 10px; color: #e2e8f0; border-bottom: 1px solid #334155; padding-bottom: 6px; }
     .modal-body h3 { font-size: 15px; font-weight: 600; margin: 16px 0 8px; color: #cbd5e1; }
@@ -252,18 +281,8 @@
       overflow-x: auto;
       margin: 12px 0;
     }
-    .modal-body pre code {
-      background: none;
-      padding: 0;
-      font-size: 13px;
-      line-height: 1.6;
-    }
-    .modal-body table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 12px 0;
-      font-size: 13px;
-    }
+    .modal-body pre code { background: none; padding: 0; font-size: 13px; line-height: 1.6; }
+    .modal-body table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
     .modal-body th {
       background: #0f172a;
       color: #94a3b8;
@@ -272,11 +291,7 @@
       font-weight: 600;
       border-bottom: 2px solid #334155;
     }
-    .modal-body td {
-      padding: 8px 12px;
-      border-bottom: 1px solid #1e293b;
-      color: #cbd5e1;
-    }
+    .modal-body td { padding: 8px 12px; border-bottom: 1px solid #1e293b; color: #cbd5e1; }
     .modal-body strong { color: #e2e8f0; }
     .modal-body blockquote {
       border-left: 3px solid #6366f1;
@@ -298,9 +313,7 @@
       transition: all 0.2s;
     }
     .github-link:hover { color: #f1f5f9; border-color: #6366f1; }
-    .search-bar {
-      margin-bottom: 24px;
-    }
+    .search-bar { margin-bottom: 24px; }
     .search-bar input {
       width: 100%;
       background: #1e293b;
@@ -315,11 +328,7 @@
     }
     .search-bar input:focus { border-color: #6366f1; }
     .search-bar input::placeholder { color: #475569; }
-    .empty-state {
-      text-align: center;
-      padding: 48px 24px;
-      color: #64748b;
-    }
+    .empty-state { text-align: center; padding: 48px 24px; color: #64748b; }
     @media (max-width: 640px) {
       .stats { grid-template-columns: repeat(2, 1fr); }
       .report-card { flex-direction: column; }
@@ -344,6 +353,11 @@
 <div class="container">
   <div class="stats" id="stats"></div>
 
+  <div class="filter-active-bar" id="filter-bar">
+    <span id="filter-label"></span>
+    <button onclick="clearFilter()">Limpar filtro</button>
+  </div>
+
   <div class="search-bar">
     <input type="text" id="search" placeholder="Buscar relatorio por titulo, bug, ou palavra-chave..." autocomplete="off">
   </div>
@@ -365,16 +379,18 @@
 const REPO = 'lucasaugustodev/relatorios-hub';
 const BRANCH = 'main';
 
+// Categorias de cada item: 'correcao', 'analise', 'plano', 'documentacao'
 const reports = [
-  // Bugs & Correcoes
+  // Master Plan
   {
-    section: 'Bugs & Correcoes',
+    section: 'Plano Geral',
     items: [
       {
         title: 'Plano de Correcao — 11/03/2026',
         desc: 'Lista consolidada de 16 bugs + 5 melhorias, priorizada em 3 blocos. Status de cada item.',
         file: 'docs/plano-correcao-bugs-11-03.md',
         icon: 'plan', emoji: '\uD83D\uDCCB',
+        cat: 'plano',
         badges: [{ text: 'Master Plan', cls: 'info' }]
       },
       {
@@ -382,73 +398,102 @@ const reports = [
         desc: 'Classificacao original das tarefas do backlog antes da priorizacao.',
         file: 'docs/classificacao-tarefas-11-03.md',
         icon: 'doc', emoji: '\uD83D\uDCC4',
+        cat: 'plano',
         badges: [{ text: 'Referencia', cls: 'info' }]
       },
+    ]
+  },
+  // Analises de Bugs
+  {
+    section: 'Analises de Bugs',
+    items: [
       {
-        title: 'Bug #391363 — Validacao Consolidada',
+        title: 'Bug #391363 — Validacao Consolidada (E2E)',
         desc: 'Teste E2E completo via Playwright. Modal de replanejamento com gap entre valor contratado e principal. Conclusao: bug de UX, nao de calculo.',
         file: 'docs/validacao-consolidada-bug-391363.md',
-        icon: 'bug', emoji: '\uD83D\uDC1B',
-        badges: [{ text: 'Corrigido', cls: 'done' }, { text: 'E2E testado', cls: 'confirmed' }]
+        icon: 'analysis', emoji: '\uD83D\uDD0D',
+        cat: 'analise',
+        badges: [{ text: 'Analise', cls: 'analysis' }, { text: 'E2E testado', cls: 'confirmed' }]
       },
       {
         title: 'Bug #391363 — Validacao Inicial',
         desc: 'Primeira validacao do bug de replanejamento. Arredondamento de parcelas causava divergencia de centavos.',
         file: 'docs/validacao-bug-391363-replanejamento.md',
-        icon: 'bug', emoji: '\uD83D\uDC1B',
-        badges: [{ text: 'Corrigido', cls: 'done' }]
+        icon: 'analysis', emoji: '\uD83D\uDD0D',
+        cat: 'analise',
+        badges: [{ text: 'Analise', cls: 'analysis' }]
       },
       {
         title: 'Bug #399923 — Analise Desconto Comissao',
         desc: 'tipoUsuario hardcoded como "comissao" faz todos receberem desconto de comissao na lojinha e adesao. Debug selector visivel em producao.',
         file: 'docs/analise-bug-399923-desconto-comissao.md',
-        icon: 'bug', emoji: '\uD83D\uDC1B',
-        badges: [{ text: 'Critico', cls: 'critical' }, { text: 'Confirmado', cls: 'confirmed' }]
+        icon: 'analysis', emoji: '\uD83D\uDD0D',
+        cat: 'analise',
+        badges: [{ text: 'Analise', cls: 'analysis' }, { text: 'Critico', cls: 'critical' }]
+      },
+    ]
+  },
+  // Correcoes
+  {
+    section: 'Correcoes',
+    items: [
+      {
+        title: 'Bug #391363 — Correcao Arredondamento Parcelas',
+        desc: 'Fix aplicado em renegociacaoService.ts: Math.floor + ultima parcela compensatoria + validacao de integridade. 22 testes passando.',
+        file: 'docs/plano-correcao-bugs-11-03.md',
+        icon: 'fix', emoji: '\u2705',
+        cat: 'correcao',
+        badges: [{ text: 'Corrigido', cls: 'done' }, { text: 'Testado', cls: 'confirmed' }]
       },
       {
-        title: 'Bug #399923 — Plano de Correcao',
-        desc: 'Alteracoes detalhadas em 4 arquivos: usePlanosLojinha, Lojinha, SelecaoParcelamentoLojinha, SelecaoParcelamento.',
+        title: 'Bug #399923 — Correcao Desconto Comissao',
+        desc: 'Alteracoes detalhadas em 4 arquivos: usePlanosLojinha, Lojinha, SelecaoParcelamentoLojinha, SelecaoParcelamento. Remocao de debug selectors.',
         file: 'docs/correcao-bug-399923-desconto-comissao.md',
         icon: 'fix', emoji: '\u2705',
+        cat: 'correcao',
         badges: [{ text: 'Aguardando Aprovacao', cls: 'pending' }]
+      },
+      {
+        title: 'Correcao Valor Lote',
+        desc: 'Correcao no calculo de valor de lotes — valor base, correcao monetaria e descontos.',
+        file: 'docs/DOCUMENTACAO_CORRECAO_VALOR_LOTE.md',
+        icon: 'fix', emoji: '\u2705',
+        cat: 'correcao',
+        badges: [{ text: 'Corrigido', cls: 'done' }]
       },
     ]
   },
   // Documentacao Financeira
   {
-    section: 'Financeiro',
+    section: 'Documentacao Financeira',
     items: [
       {
-        title: 'Documentacao Financeira — Selecao de Parcelamento',
+        title: 'Selecao de Parcelamento',
         desc: 'Documentacao completa do fluxo de calculo de parcelas, correcao monetaria, descontos e cronogramas.',
         file: 'docs/DOCUMENTACAO_FINANCEIRA_SELECAO_PARCELAMENTO.md',
         icon: 'finance', emoji: '\uD83D\uDCB0',
+        cat: 'documentacao',
         badges: [{ text: 'Documentacao', cls: 'info' }]
       },
       {
-        title: 'Correcao Valor Lote',
-        desc: 'Documentacao da correcao no calculo de valor de lotes.',
-        file: 'docs/DOCUMENTACAO_CORRECAO_VALOR_LOTE.md',
-        icon: 'fix', emoji: '\u2705',
-        badges: [{ text: 'Corrigido', cls: 'done' }]
-      },
-      {
-        title: 'Renegociacao',
-        desc: 'Fluxo completo de renegociacao financeira — regras, calculos e modal.',
+        title: 'Renegociacao Financeira',
+        desc: 'Fluxo completo de renegociacao — regras, calculos e modal.',
         file: 'docs/renegociação.md',
         icon: 'finance', emoji: '\uD83D\uDCB0',
+        cat: 'documentacao',
         badges: [{ text: 'Documentacao', cls: 'info' }]
       },
       {
         title: 'Chargeback',
-        desc: 'Documentacao do fluxo de chargeback e tratamento de estornos.',
+        desc: 'Fluxo de chargeback e tratamento de estornos.',
         file: 'docs/chargeback.md',
         icon: 'finance', emoji: '\uD83D\uDCB0',
+        cat: 'documentacao',
         badges: [{ text: 'Documentacao', cls: 'info' }]
       },
     ]
   },
-  // Integracao & Contratos
+  // Integracoes & Contratos
   {
     section: 'Integracoes & Contratos',
     items: [
@@ -457,6 +502,7 @@ const reports = [
         desc: 'Como configurar templates de contrato PDF com variaveis dinamicas.',
         file: 'docs/CONFIGURAR_PDF_COM_VARIAVEIS.md',
         icon: 'doc', emoji: '\uD83D\uDCC4',
+        cat: 'documentacao',
         badges: [{ text: 'Guia', cls: 'info' }]
       },
       {
@@ -464,6 +510,7 @@ const reports = [
         desc: 'Exemplo pratico de integracao com o sistema de contratos.',
         file: 'docs/EXEMPLO_INTEGRACAO_CONTRATO.md',
         icon: 'doc', emoji: '\uD83D\uDCC4',
+        cat: 'documentacao',
         badges: [{ text: 'Exemplo', cls: 'info' }]
       },
       {
@@ -471,35 +518,119 @@ const reports = [
         desc: 'Template de contrato demonstrando uso de variaveis.',
         file: 'docs/EXEMPLO_CONTRATO_COM_VARIAVEIS.md',
         icon: 'doc', emoji: '\uD83D\uDCC4',
+        cat: 'documentacao',
         badges: [{ text: 'Exemplo', cls: 'info' }]
       },
     ]
   }
 ];
 
-// Render
-function render(filter = '') {
+// State
+let activeFilter = null; // null, 'all', 'analise', 'correcao', 'plano', 'pending'
+
+function countItems() {
+  let total = 0, analises = 0, correcoes = 0, planos = 0, pendentes = 0;
+  reports.forEach(s => s.items.forEach(item => {
+    total++;
+    if (item.cat === 'analise') analises++;
+    if (item.cat === 'correcao') correcoes++;
+    if (item.cat === 'plano') planos++;
+    if (item.badges.some(b => b.cls === 'pending')) pendentes++;
+  }));
+  return { total, analises, correcoes, planos, pendentes };
+}
+
+function toggleFilter(filter) {
+  if (activeFilter === filter) {
+    activeFilter = null;
+  } else {
+    activeFilter = filter;
+  }
+  document.getElementById('search').value = '';
+  render();
+}
+
+function clearFilter() {
+  activeFilter = null;
+  document.getElementById('search').value = '';
+  render();
+}
+
+const FILTER_LABELS = {
+  correcao: 'Mostrando: Correcoes',
+  analise: 'Mostrando: Analises de Bugs',
+  plano: 'Mostrando: Planos',
+  pending: 'Mostrando: Aguardando Aprovacao',
+};
+
+function render(searchQuery = '') {
   const sectionsEl = document.getElementById('sections');
-  const q = filter.toLowerCase();
+  const q = searchQuery.toLowerCase();
+  const counts = countItems();
+
+  // Filter bar
+  const filterBar = document.getElementById('filter-bar');
+  if (activeFilter) {
+    filterBar.classList.add('show');
+    document.getElementById('filter-label').textContent = FILTER_LABELS[activeFilter] || 'Filtro ativo';
+  } else {
+    filterBar.classList.remove('show');
+  }
+
+  // Stats (clickable)
+  const statsEl = document.getElementById('stats');
+  const sc = (f, cls) => activeFilter === f ? 'stat-card active' : 'stat-card';
+  statsEl.innerHTML = `
+    <div class="${sc('all','blue')}" onclick="clearFilter()">
+      <div class="label">Total de Relatorios</div>
+      <div class="value blue">${counts.total}</div>
+    </div>
+    <div class="${sc('analise','purple')}" onclick="toggleFilter('analise')">
+      <div class="label">Analises</div>
+      <div class="value purple">${counts.analises}</div>
+    </div>
+    <div class="${sc('correcao','green')}" onclick="toggleFilter('correcao')">
+      <div class="label">Correcoes</div>
+      <div class="value green">${counts.correcoes}</div>
+    </div>
+    <div class="${sc('plano','blue')}" onclick="toggleFilter('plano')">
+      <div class="label">Planos</div>
+      <div class="value blue">${counts.planos}</div>
+    </div>
+    <div class="${sc('pending','yellow')}" onclick="toggleFilter('pending')">
+      <div class="label">Aguardando</div>
+      <div class="value yellow">${counts.pendentes}</div>
+    </div>
+  `;
+
+  // Render sections
   let html = '';
-  let totalReports = 0, bugs = 0, fixed = 0, pending = 0;
+  let visibleCount = 0;
 
   reports.forEach(section => {
-    const filtered = section.items.filter(item =>
-      !q || item.title.toLowerCase().includes(q) || item.desc.toLowerCase().includes(q) || item.file.toLowerCase().includes(q)
-    );
+    const filtered = section.items.filter(item => {
+      // Category filter
+      if (activeFilter) {
+        if (activeFilter === 'pending') {
+          if (!item.badges.some(b => b.cls === 'pending')) return false;
+        } else {
+          if (item.cat !== activeFilter) return false;
+        }
+      }
+      // Text search
+      if (q && !(item.title.toLowerCase().includes(q) || item.desc.toLowerCase().includes(q) || item.file.toLowerCase().includes(q))) {
+        return false;
+      }
+      return true;
+    });
     if (filtered.length === 0) return;
-    totalReports += filtered.length;
+    visibleCount += filtered.length;
 
     html += `<h2 class="section-title">${section.section}</h2><div class="reports-grid">`;
-    filtered.forEach((item, i) => {
-      item.badges.forEach(b => {
-        if (b.cls === 'critical' || b.text.includes('Bug')) bugs++;
-        if (b.cls === 'done') fixed++;
-        if (b.cls === 'pending') pending++;
-      });
+    filtered.forEach(item => {
+      const escapedTitle = item.title.replace(/'/g, "\\'");
       html += `
-        <a class="report-card" onclick="openReport('${item.file}', '${item.title.replace(/'/g, "\\'")}')">
+        <a class="report-card" onclick="openReport('${item.file}', '${escapedTitle}')">
           <div class="report-icon ${item.icon}">${item.emoji}</div>
           <div class="report-body">
             <h3>${item.title}</h3>
@@ -516,20 +647,15 @@ function render(filter = '') {
     html += '</div>';
   });
 
-  if (!html) html = '<div class="empty-state">Nenhum relatorio encontrado para essa busca.</div>';
+  if (!html) html = '<div class="empty-state">Nenhum relatorio encontrado.</div>';
   sectionsEl.innerHTML = html;
-
-  // Stats
-  document.getElementById('stats').innerHTML = `
-    <div class="stat-card"><div class="label">Total de Relatorios</div><div class="value blue">${totalReports}</div></div>
-    <div class="stat-card"><div class="label">Bugs Criticos</div><div class="value red">${bugs}</div></div>
-    <div class="stat-card"><div class="label">Corrigidos</div><div class="value green">${fixed}</div></div>
-    <div class="stat-card"><div class="label">Aguardando</div><div class="value yellow">${pending}</div></div>
-  `;
 }
 
 // Search
-document.getElementById('search').addEventListener('input', e => render(e.target.value));
+document.getElementById('search').addEventListener('input', e => {
+  activeFilter = null;
+  render(e.target.value);
+});
 
 // Modal
 async function openReport(file, title) {
