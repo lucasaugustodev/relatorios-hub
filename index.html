@@ -362,7 +362,7 @@
 </div>
 
 <script>
-const REPO = 'lucasaugustodev/hub-portal-vibe';
+const REPO = 'lucasaugustodev/relatorios-hub';
 const BRANCH = 'main';
 
 const reports = [
@@ -373,42 +373,42 @@ const reports = [
       {
         title: 'Plano de Correcao — 11/03/2026',
         desc: 'Lista consolidada de 16 bugs + 5 melhorias, priorizada em 3 blocos. Status de cada item.',
-        file: 'plano-correcao-bugs-11-03.md',
+        file: 'docs/plano-correcao-bugs-11-03.md',
         icon: 'plan', emoji: '\uD83D\uDCCB',
         badges: [{ text: 'Master Plan', cls: 'info' }]
       },
       {
         title: 'Classificacao de Tarefas — 11/03',
         desc: 'Classificacao original das tarefas do backlog antes da priorizacao.',
-        file: 'classificacao-tarefas-11-03.md',
+        file: 'docs/classificacao-tarefas-11-03.md',
         icon: 'doc', emoji: '\uD83D\uDCC4',
         badges: [{ text: 'Referencia', cls: 'info' }]
       },
       {
         title: 'Bug #391363 — Validacao Consolidada',
         desc: 'Teste E2E completo via Playwright. Modal de replanejamento com gap entre valor contratado e principal. Conclusao: bug de UX, nao de calculo.',
-        file: 'validacao-consolidada-bug-391363.md',
+        file: 'docs/validacao-consolidada-bug-391363.md',
         icon: 'bug', emoji: '\uD83D\uDC1B',
         badges: [{ text: 'Corrigido', cls: 'done' }, { text: 'E2E testado', cls: 'confirmed' }]
       },
       {
         title: 'Bug #391363 — Validacao Inicial',
         desc: 'Primeira validacao do bug de replanejamento. Arredondamento de parcelas causava divergencia de centavos.',
-        file: 'validacao-bug-391363-replanejamento.md',
+        file: 'docs/validacao-bug-391363-replanejamento.md',
         icon: 'bug', emoji: '\uD83D\uDC1B',
         badges: [{ text: 'Corrigido', cls: 'done' }]
       },
       {
         title: 'Bug #399923 — Analise Desconto Comissao',
         desc: 'tipoUsuario hardcoded como "comissao" faz todos receberem desconto de comissao na lojinha e adesao. Debug selector visivel em producao.',
-        file: 'analise-bug-399923-desconto-comissao.md',
+        file: 'docs/analise-bug-399923-desconto-comissao.md',
         icon: 'bug', emoji: '\uD83D\uDC1B',
         badges: [{ text: 'Critico', cls: 'critical' }, { text: 'Confirmado', cls: 'confirmed' }]
       },
       {
         title: 'Bug #399923 — Plano de Correcao',
         desc: 'Alteracoes detalhadas em 4 arquivos: usePlanosLojinha, Lojinha, SelecaoParcelamentoLojinha, SelecaoParcelamento.',
-        file: 'correcao-bug-399923-desconto-comissao.md',
+        file: 'docs/correcao-bug-399923-desconto-comissao.md',
         icon: 'fix', emoji: '\u2705',
         badges: [{ text: 'Aguardando Aprovacao', cls: 'pending' }]
       },
@@ -421,28 +421,28 @@ const reports = [
       {
         title: 'Documentacao Financeira — Selecao de Parcelamento',
         desc: 'Documentacao completa do fluxo de calculo de parcelas, correcao monetaria, descontos e cronogramas.',
-        file: 'DOCUMENTACAO_FINANCEIRA_SELECAO_PARCELAMENTO.md',
+        file: 'docs/DOCUMENTACAO_FINANCEIRA_SELECAO_PARCELAMENTO.md',
         icon: 'finance', emoji: '\uD83D\uDCB0',
         badges: [{ text: 'Documentacao', cls: 'info' }]
       },
       {
         title: 'Correcao Valor Lote',
         desc: 'Documentacao da correcao no calculo de valor de lotes.',
-        file: 'DOCUMENTACAO_CORRECAO_VALOR_LOTE.md',
+        file: 'docs/DOCUMENTACAO_CORRECAO_VALOR_LOTE.md',
         icon: 'fix', emoji: '\u2705',
         badges: [{ text: 'Corrigido', cls: 'done' }]
       },
       {
         title: 'Renegociacao',
         desc: 'Fluxo completo de renegociacao financeira — regras, calculos e modal.',
-        file: 'renegociação.md',
+        file: 'docs/renegociação.md',
         icon: 'finance', emoji: '\uD83D\uDCB0',
         badges: [{ text: 'Documentacao', cls: 'info' }]
       },
       {
         title: 'Chargeback',
         desc: 'Documentacao do fluxo de chargeback e tratamento de estornos.',
-        file: 'chargeback.md',
+        file: 'docs/chargeback.md',
         icon: 'finance', emoji: '\uD83D\uDCB0',
         badges: [{ text: 'Documentacao', cls: 'info' }]
       },
@@ -455,21 +455,21 @@ const reports = [
       {
         title: 'Configurar PDF com Variaveis',
         desc: 'Como configurar templates de contrato PDF com variaveis dinamicas.',
-        file: 'CONFIGURAR_PDF_COM_VARIAVEIS.md',
+        file: 'docs/CONFIGURAR_PDF_COM_VARIAVEIS.md',
         icon: 'doc', emoji: '\uD83D\uDCC4',
         badges: [{ text: 'Guia', cls: 'info' }]
       },
       {
         title: 'Exemplo Integracao Contrato',
         desc: 'Exemplo pratico de integracao com o sistema de contratos.',
-        file: 'EXEMPLO_INTEGRACAO_CONTRATO.md',
+        file: 'docs/EXEMPLO_INTEGRACAO_CONTRATO.md',
         icon: 'doc', emoji: '\uD83D\uDCC4',
         badges: [{ text: 'Exemplo', cls: 'info' }]
       },
       {
         title: 'Exemplo Contrato com Variaveis',
         desc: 'Template de contrato demonstrando uso de variaveis.',
-        file: 'EXEMPLO_CONTRATO_COM_VARIAVEIS.md',
+        file: 'docs/EXEMPLO_CONTRATO_COM_VARIAVEIS.md',
         icon: 'doc', emoji: '\uD83D\uDCC4',
         badges: [{ text: 'Exemplo', cls: 'info' }]
       },
