@@ -9,7 +9,7 @@
 
 ## 1. Resumo Executivo
 
-O sistema de upgrade de plano esta **cobrando valores massivamente acima do correto** de todos os formandos que fizeram upgrade. A causa raiz e o reuso indevido da formula de rescisao (`calcularAlteracao()`) que trata parcelas pendentes do contrato antigo como "dividas adicionais" (`ACORDOS_NAO_QUITADOS`), somando-as ao valor do novo plano.
+O sistema de upgrade de plano esta **cobrando valores massivamente acima do correto** de todos os formandos que fizeram upgrade. A causa raiz e que `calcularAlteracao()` inclui `ACORDOS_NAO_QUITADOS` no calculo — parcelas de renegociacao que representam o **principal reestruturado completo** do plano antigo. Quando o formando faz upgrade, essas parcelas deveriam ser canceladas junto com o contrato antigo, mas em vez disso sao somadas como divida adicional ao plano novo.
 
 ### Impacto em producao
 
@@ -26,9 +26,9 @@ O sistema de upgrade de plano esta **cobrando valores massivamente acima do corr
 
 ## 2. Causa Raiz
 
-### 2.1. Formula de rescisao reutilizada para upgrade
+### 2.1. ACORDOS_NAO_QUITADOS inclui principal reestruturado da renegociacao
 
-O arquivo `src/services/mudancaPlanoService.ts` usa a funcao `calcularAlteracao()` (linha 295) que aplica a **mesma formula de rescisao** para calcular o saldo do upgrade:
+O arquivo `src/services/mudancaPlanoService.ts` usa a funcao `calcularAlteracao()` (linha 295) que aplica a formula:
 
 ```
 SALDO_BASE = MULTA - PRINCIPAL_QUITADO
@@ -53,10 +53,26 @@ const ACORDOS_NAO_QUITADOS = (parcelas || [])
   }, 0);
 ```
 
-Quando o contrato antigo passou por renegociacao, as parcelas de renegociacao pendentes sao **somadas como divida adicional**. Isso faz o formando pagar:
+**O filtro esta correto** — pega apenas parcelas tipo `renegociacao` e `entrada_renegociacao`. O problema e que a renegociacao cria parcelas que incluem o **principal reestruturado completo**, nao apenas juros/multas.
+
+#### Prova via backup (Aninha Trindade)
+
+O backup das parcelas canceladas pelo upgrade mostra os tipos ORIGINAIS:
+
+| Tipo Original | Qtd | Soma | Observacao |
+|---|---|---|---|
+| `entrada_renegociacao` | 1 | R$ 596,00 | Entrada da renegociacao |
+| `renegociacao` | 42 | R$ 25.032,00 | **Principal reestruturado** |
+| `taxa_renegociacao` | 1 | R$ 954,56 | Taxa (NAO capturada pelo filtro) |
+
+O filtro captura: R$ 596 + R$ 25.032 = **R$ 25.628** ← exatamente o valor no JSON!
+
+Essas 42 parcelas de renegociacao representam o **pagamento normal reestruturado** do plano antigo (R$ 25.628,01). No contexto de rescisao, faz sentido contar como divida pendente. Mas no contexto de **upgrade**, essas parcelas serao CANCELADAS junto com o contrato antigo — conta-las como divida e **dupla cobranca**.
+
+O formando acaba pagando:
 1. O valor INTEGRAL do plano novo (entrada + parcelas)
 2. MAIS a MULTA de upgrade (% do plano antigo)
-3. MAIS o saldo devedor do contrato antigo (ACORDOS_NAO_QUITADOS)
+3. MAIS o saldo da renegociacao (= basicamente o plano antigo inteiro de novo)
 
 ### 2.2. DEBITO adicionado POR CIMA do preco do plano novo
 
@@ -191,26 +207,33 @@ A funcao `calcularAlteracao()` busca parcelas com `status === 'pago'` (linha 337
 ## 6. Fluxo do bug (passo a passo)
 
 ```
-1. Formando tem contrato antigo (plano R$ 13.688,20)
-   └─ Contrato foi renegociado → parcelas tipo 'renegociacao' pendentes
+1. Formando tem contrato antigo (plano R$ 25.628,01)
+   └─ Contrato foi RENEGOCIADO → 42 parcelas tipo 'renegociacao' (R$ 25.032)
+      + 1 entrada_renegociacao (R$ 596) = R$ 25.628 de principal reestruturado
 
-2. Formando solicita UPGRADE para plano R$ 16.329,35
+2. Formando solicita UPGRADE para plano R$ 34.318,71
 
 3. calcularAlteracao() executa:
-   ├─ MULTA = 20% × R$ 13.688,20 = R$ 2.737,64
+   ├─ MULTA = 15% × R$ 25.628,01 = R$ 3.844,20
    ├─ PRINCIPAL_QUITADO = R$ 0,00 (nada pago)
-   ├─ ACORDOS_NAO_QUITADOS = R$ 13.688,40 ← TODAS as parcelas pendentes!
-   ├─ SALDO_BASE = R$ 2.737,64 - R$ 0 = R$ 2.737,64
-   ├─ PENDENCIAS = R$ 0 + R$ 13.688,40 = R$ 13.688,40
-   └─ DEBITO = R$ 2.737,64 + R$ 13.688,40 = R$ 16.426,04
+   ├─ ACORDOS_NAO_QUITADOS = R$ 25.628,00 ← parcelas renegociacao pendentes
+   │   (sao o principal reestruturado, NAO juros/multas!)
+   ├─ SALDO_BASE = R$ 3.844,20 - R$ 0 = R$ 3.844,20
+   ├─ PENDENCIAS = R$ 0 + R$ 25.628,00 = R$ 25.628,00
+   └─ DEBITO = R$ 3.844,20 + R$ 25.628,00 = R$ 29.472,20
 
 4. calcularMudancaPlano() aplica:
-   ├─ Entrada = R$ 3.265,87 (20% do plano novo)
-   ├─ 40 parcelas normais × R$ 408,23 = R$ 16.329,20
-   ├─ Parcela ajuste (DEBITO) = R$ 16.426,04
-   └─ TOTAL = R$ 3.265,87 + R$ 16.329,20 + R$ 16.426,04 = R$ 36.021,11
+   ├─ Entrada = R$ 6.863,74 (20% do plano novo)
+   ├─ 45 parcelas = R$ 73.878,38 (plano novo integral)
+   ├─ Parcela ajuste (DEBITO) = R$ 29.472,20 (multa + plano antigo)
+   └─ TOTAL = R$ 6.863,74 + R$ 73.878,38 = R$ 80.742,12
 
-5. Formando paga R$ 36.021 por um plano de R$ 16.329 (220%!)
+5. executarMudancaPlano() depois:
+   └─ Cancela as parcelas de renegociacao → tipo 'cancelada_mudanca_plano'
+      (mas o DEBITO ja foi calculado com elas como divida!)
+
+6. Resultado: formando paga R$ 80.742 por um plano de R$ 34.318 (235%!)
+   = Plano novo inteiro + plano antigo inteiro + multa
 ```
 
 ---
@@ -228,26 +251,40 @@ A funcao `calcularAlteracao()` busca parcelas com `status === 'pago'` (linha 337
 
 ## 8. Correcao necessaria
 
-### O que o upgrade DEVERIA fazer:
-
-```
-1. Calcular CREDITO = valor ja pago no plano antigo (PRINCIPAL_QUITADO)
-2. Calcular TAXA_UPGRADE = percentual configurado × valor plano antigo
-3. Calcular DIFERENCA = valor_plano_novo - valor_plano_antigo
-4. SALDO = DIFERENCA + TAXA_UPGRADE - CREDITO
-5. Se SALDO > 0: formando paga a diferenca
-6. Se SALDO < 0: formando recebe credito
-7. NAO incluir ACORDOS_NAO_QUITADOS (parcelas do contrato antigo serao CANCELADAS)
-```
-
 ### O que o upgrade FAZ HOJE (errado):
 
 ```
 1. Cobra o plano novo INTEIRO (entrada + parcelas)
 2. MAIS a MULTA (% do plano antigo)
-3. MAIS todo o saldo devedor do contrato antigo (ACORDOS_NAO_QUITADOS)
-4. = Formando paga ~2x o valor correto
+3. MAIS o principal reestruturado da renegociacao (ACORDOS_NAO_QUITADOS)
+   → parcelas tipo 'renegociacao' que representam o PAGAMENTO do plano antigo
+   → essas parcelas serao CANCELADAS pelo upgrade, mas ja foram contadas como divida
+4. = Formando paga plano novo + plano antigo + multa
 ```
+
+### O que DEVERIA fazer:
+
+Para upgrade, `ACORDOS_NAO_QUITADOS` **nao deve incluir parcelas de renegociacao que serao canceladas** pelo upgrade. Essas parcelas representam o principal do contrato antigo que esta sendo substituido.
+
+Opcao A — Zerar ACORDOS para upgrades:
+```typescript
+// Em calcularAlteracao(), quando tipoAlteracao === 'upgrade':
+const ACORDOS_NAO_QUITADOS = 0; // parcelas serao canceladas pelo upgrade
+```
+
+Opcao B — Incluir so juros/multas reais (tipo `taxa_renegociacao`):
+```typescript
+// Filtrar parcelas que representam APENAS juros/multas negociados
+const ACORDOS_NAO_QUITADOS = (parcelas || [])
+  .filter(p => {
+    const tipo = p.tipo || 'normal';
+    return ['taxa_renegociacao'].includes(tipo) && // ← so taxa, nao principal
+      ['pendente', 'vencido'].includes(p.status);
+  })
+  .reduce(...);
+```
+
+A decisao entre A e B depende da regra de negocio: se juros/multas negociados devem ser cobrados no upgrade ou nao.
 
 ---
 
