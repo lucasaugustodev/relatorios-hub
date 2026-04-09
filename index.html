@@ -208,6 +208,8 @@
     .badge.info { background: #1e3a5f; color: #93c5fd; }
     .badge.done { background: #064e3b; color: #6ee7b7; }
     .badge.analysis { background: #4a1d6e; color: #d8b4fe; }
+    .badge-link { cursor: pointer; text-decoration: none; }
+    .badge-link:hover { opacity: 0.8; }
 
     /* Modal */
     .modal-overlay {
@@ -441,6 +443,7 @@ const reports = [
         title: 'Bug #391363 — Correcao Arredondamento Parcelas',
         desc: 'Fix aplicado em renegociacaoService.ts: Math.floor + ultima parcela compensatoria + validacao de integridade. 22 testes passando.',
         file: 'docs/plano-correcao-bugs-11-03.md',
+        analise: 'docs/validacao-consolidada-bug-391363.md',
         icon: 'fix', emoji: '\u2705',
         cat: 'correcao',
         badges: [{ text: 'Corrigido', cls: 'done' }, { text: 'Testado', cls: 'confirmed' }]
@@ -449,6 +452,7 @@ const reports = [
         title: 'Bug #399923 — Correcao Desconto Comissao',
         desc: 'Alteracoes detalhadas em 4 arquivos: usePlanosLojinha, Lojinha, SelecaoParcelamentoLojinha, SelecaoParcelamento. Remocao de debug selectors.',
         file: 'docs/correcao-bug-399923-desconto-comissao.md',
+        analise: 'docs/analise-bug-399923-desconto-comissao.md',
         icon: 'fix', emoji: '\u2705',
         cat: 'correcao',
         badges: [{ text: 'Corrigido', cls: 'done' }, { text: 'Pushado', cls: 'confirmed' }]
@@ -457,6 +461,7 @@ const reports = [
         title: 'Bug #399907 — Correcao Somatorio Convites',
         desc: 'Desconto valor_fixo agora multiplica pela quantidade. 29 testes passando. Zero regressao (default quantidade=1).',
         file: 'docs/correcao-bug-399907-somatorio-convites.md',
+        analise: 'docs/analise-bug-399907-somatorio-convites.md',
         icon: 'fix', emoji: '\u2705',
         cat: 'correcao',
         badges: [{ text: 'Corrigido', cls: 'done' }, { text: '29 testes', cls: 'confirmed' }]
@@ -465,6 +470,7 @@ const reports = [
         title: 'Bug #399883 + #400011 — Correcao Datas Fora do Periodo',
         desc: 'Validacao de dataUltimaParcela em renegociacaoService, mudancaPlanoService e modal. 27 testes passando. Defense-in-depth antes do insert.',
         file: 'docs/correcao-bug-399883-400011-datas-parcelas.md',
+        analise: 'docs/analise-bug-399883-400011-datas-parcelas.md',
         icon: 'fix', emoji: '\u2705',
         cat: 'correcao',
         badges: [{ text: 'Corrigido', cls: 'done' }, { text: '27 testes', cls: 'confirmed' }]
@@ -473,6 +479,7 @@ const reports = [
         title: 'Bug #399995 — Correcao Upgrade de Plano',
         desc: 'ACORDOS_NAO_QUITADOS corrigido para taxa_renegociacao. PRINCIPAL_QUITADO inclui parcelas renegociacao pagas. 52 testes passando.',
         file: 'docs/correcao-bug-399995-upgrade-plano.md',
+        analise: 'docs/analise-bug-399995-upgrade-plano.md',
         icon: 'fix', emoji: '\u2705',
         cat: 'correcao',
         badges: [{ text: 'Corrigido', cls: 'done' }, { text: '52 testes', cls: 'confirmed' }]
@@ -481,6 +488,7 @@ const reports = [
         title: 'Bug #399911 — Correcao Limite Convites Cumulativo',
         desc: 'Limite por usuario agora cumulativo entre transacoes. 3 camadas: dados (hook), frontend (UI bloqueia), backend (valida antes INSERT). 4 arquivos.',
         file: 'docs/correcao-bug-399911-limite-convites.md',
+        analise: 'docs/analise-bug-399911-limite-convites.md',
         icon: 'fix', emoji: '\u2705',
         cat: 'correcao',
         badges: [{ text: 'Corrigido', cls: 'done' }, { text: '4 arquivos', cls: 'confirmed' }]
@@ -489,6 +497,7 @@ const reports = [
         title: 'Bug #399885 — Correcao Lote Agendado',
         desc: '4 bugs corrigidos: lote pausado bloqueava ativacao agendada, ativacoes duplicadas (race condition), log status errado, disponivel inconsistente.',
         file: 'docs/correcao-bug-399885-lote-agendado.md',
+        analise: 'docs/analise-bug-399885-lote-agendado.md',
         icon: 'fix', emoji: '\u2705',
         cat: 'correcao',
         badges: [{ text: 'Corrigido', cls: 'done' }, { text: '4 bugs', cls: 'confirmed' }]
@@ -497,6 +506,7 @@ const reports = [
         title: 'Bug #400009 — Correcao Contrato Transferido',
         desc: 'Contratos transferidos agora aparecem na aba correta. Acoes bloqueadas via isContratoTransferido(). Status com 4 estados.',
         file: 'docs/correcao-bug-400009-upgrade-plano-transferido.md',
+        analise: 'docs/analise-bug-400009-upgrade-plano-transferido.md',
         icon: 'fix', emoji: '\u2705',
         cat: 'correcao',
         badges: [{ text: 'Corrigido', cls: 'done' }, { text: '0 erros TS', cls: 'confirmed' }]
@@ -685,6 +695,7 @@ function render(searchQuery = '') {
             <p>${item.desc}</p>
             <div class="report-meta">
               ${item.badges.map(b => `<span class="badge ${b.cls}">${b.text}</span>`).join('')}
+              ${item.analise ? `<span class="badge analysis badge-link" onclick="event.stopPropagation(); event.preventDefault(); openReport('${item.analise}', '${escapedTitle} — Analise')">Ver Analise</span>` : ''}
               <a class="github-link" href="${githubBlobUrl(item.file)}" target="_blank" onclick="event.stopPropagation()">
                 GitHub &rarr;
               </a>
