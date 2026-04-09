@@ -424,84 +424,12 @@ const reports = [
     section: 'Analises de Bugs',
     items: [
       {
-        title: 'Bug #391363 — Validacao Consolidada (E2E)',
-        desc: 'Teste E2E completo via Playwright. Modal de replanejamento com gap entre valor contratado e principal. Conclusao: bug de UX, nao de calculo.',
-        file: 'docs/validacao-consolidada-bug-391363.md',
-        icon: 'analysis', emoji: '\uD83D\uDD0D',
-        cat: 'analise',
-        badges: [{ text: 'Analise', cls: 'analysis' }, { text: 'E2E testado', cls: 'confirmed' }]
-      },
-      {
-        title: 'Bug #391363 — Validacao Inicial',
-        desc: 'Primeira validacao do bug de replanejamento. Arredondamento de parcelas causava divergencia de centavos.',
-        file: 'docs/validacao-bug-391363-replanejamento.md',
-        icon: 'analysis', emoji: '\uD83D\uDD0D',
-        cat: 'analise',
-        badges: [{ text: 'Analise', cls: 'analysis' }]
-      },
-      {
-        title: 'Bug #399923 — Analise Desconto Comissao',
-        desc: 'tipoUsuario hardcoded como "comissao" faz todos receberem desconto de comissao na lojinha e adesao. Debug selector visivel em producao.',
-        file: 'docs/analise-bug-399923-desconto-comissao.md',
-        icon: 'analysis', emoji: '\uD83D\uDD0D',
-        cat: 'analise',
-        badges: [{ text: 'Analise', cls: 'analysis' }, { text: 'Critico', cls: 'critical' }]
-      },
-      {
-        title: 'Bug #399907 — Analise Somatorio Convites Extras',
-        desc: 'Desconto valor_fixo aplicado 1x no total em vez de multiplicar pela quantidade. Afeta lojinha com convites extras.',
-        file: 'docs/analise-bug-399907-somatorio-convites.md',
-        icon: 'analysis', emoji: '\uD83D\uDD0D',
-        cat: 'analise',
-        badges: [{ text: 'Analise', cls: 'analysis' }, { text: 'Critico', cls: 'critical' }]
-      },
-      {
         title: 'Bug #399877 — AA no Replanejamento',
         desc: 'Analise completa da AA no replanejamento. Calculo financeiro CORRETO — problema real e de UX/comunicacao. Modal nao explica separacao AA/normais.',
         file: 'docs/analise-bug-399877-aa-replanejamento.md',
         icon: 'analysis', emoji: '\uD83D\uDD0D',
         cat: 'analise',
         badges: [{ text: 'Analise', cls: 'analysis' }, { text: 'UX', cls: 'info' }]
-      },
-      {
-        title: 'Bug #399883 + #400011 — Datas Fora do Periodo Financeiro',
-        desc: '51 contratos afetados, 906 parcelas fora do periodo. renegociacaoService e mudancaPlanoService ignoram dataUltimaParcela da turma.',
-        file: 'docs/analise-bug-399883-400011-datas-parcelas.md',
-        icon: 'analysis', emoji: '\uD83D\uDD0D',
-        cat: 'analise',
-        badges: [{ text: 'Analise', cls: 'analysis' }, { text: 'Critico', cls: 'critical' }]
-      },
-      {
-        title: 'Bug #399995 — Upgrade de Plano com Sobrecobranca',
-        desc: '24 upgrades ativos com R$ 297.144,91 em sobrecobranca. Formula de rescisao reutilizada soma ACORDOS_NAO_QUITADOS como divida adicional ao plano novo.',
-        file: 'docs/analise-bug-399995-upgrade-plano.md',
-        icon: 'analysis', emoji: '\uD83D\uDD0D',
-        cat: 'analise',
-        badges: [{ text: 'Analise', cls: 'analysis' }, { text: 'Critico', cls: 'critical' }]
-      },
-      {
-        title: 'Bug #399885 — Lote Agendado Nao Ativou',
-        desc: '4 problemas: lote pausado bloqueia ativacao agendada, ativacoes duplicadas (race condition), log status errado, disponivel inconsistente.',
-        file: 'docs/analise-bug-399885-lote-agendado.md',
-        icon: 'analysis', emoji: '\uD83D\uDD0D',
-        cat: 'analise',
-        badges: [{ text: 'Analise', cls: 'analysis' }, { text: '4 bugs', cls: 'critical' }]
-      },
-      {
-        title: 'Bug #399911 — Limite Convites Nao Cumulativo',
-        desc: 'Limite por usuario nao descontava compras anteriores. 2 usuarios com 8 compras (limite 5). Afeta SelecaoQuantidade + Contratacao.',
-        file: 'docs/analise-bug-399911-limite-convites.md',
-        icon: 'analysis', emoji: '\uD83D\uDD0D',
-        cat: 'analise',
-        badges: [{ text: 'Analise', cls: 'analysis' }, { text: 'Confirmado', cls: 'confirmed' }]
-      },
-      {
-        title: 'Bug #400009 — Acoes em Contrato Transferido',
-        desc: 'Contrato transferido nao aparece na aba correta, acoes (upgrade/downgrade/rescisao) continuam disponiveis. 3 problemas: query, status binario, falta de bloqueio.',
-        file: 'docs/analise-bug-400009-upgrade-plano-transferido.md',
-        icon: 'analysis', emoji: '\uD83D\uDD0D',
-        cat: 'analise',
-        badges: [{ text: 'Analise', cls: 'analysis' }, { text: 'Confirmado', cls: 'confirmed' }]
       },
     ]
   },
