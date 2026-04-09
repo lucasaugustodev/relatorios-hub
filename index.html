@@ -379,6 +379,22 @@
 const REPO = 'lucasaugustodev/relatorios-hub';
 const BRANCH = 'main';
 
+function encodeRepoPath(file) {
+  return file.split('/').map(encodeURIComponent).join('/');
+}
+
+function githubBlobUrl(file) {
+  return `https://github.com/${REPO}/blob/${BRANCH}/${encodeRepoPath(file)}`;
+}
+
+function githubRawUrl(file) {
+  return `https://raw.githubusercontent.com/${REPO}/${BRANCH}/${encodeRepoPath(file)}`;
+}
+
+function localDocUrl(file) {
+  return encodeURI(file);
+}
+
 // Categorias de cada item: 'correcao', 'analise', 'plano', 'documentacao'
 const reports = [
   // Master Plan
@@ -733,7 +749,7 @@ function render(searchQuery = '') {
             <p>${item.desc}</p>
             <div class="report-meta">
               ${item.badges.map(b => `<span class="badge ${b.cls}">${b.text}</span>`).join('')}
-              <a class="github-link" href="https://github.com/${REPO}/blob/${BRANCH}/${item.file}" target="_blank" onclick="event.stopPropagation()">
+              <a class="github-link" href="${githubBlobUrl(item.file)}" target="_blank" onclick="event.stopPropagation()">
                 GitHub &rarr;
               </a>
             </div>
@@ -764,13 +780,20 @@ async function openReport(file, title) {
   modal.classList.add('active');
 
   try {
-    const url = `https://raw.githubusercontent.com/${REPO}/${BRANCH}/${encodeURIComponent(file)}`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const md = await res.text();
-    body.innerHTML = marked.parse(md);
+    const sources = [localDocUrl(file), githubRawUrl(file)];
+
+    for (const url of sources) {
+      const res = await fetch(url);
+      if (!res.ok) continue;
+
+      const md = await res.text();
+      body.innerHTML = marked.parse(md);
+      return;
+    }
+
+    throw new Error('Document unavailable from local host and GitHub');
   } catch (err) {
-    body.innerHTML = `<p style="color:#f87171;">Erro ao carregar o documento. <a href="https://github.com/${REPO}/blob/${BRANCH}/${file}" target="_blank" style="color:#60a5fa;">Abrir no GitHub</a></p>`;
+    body.innerHTML = `<p style="color:#f87171;">Erro ao carregar o documento. <a href="${githubBlobUrl(file)}" target="_blank" style="color:#60a5fa;">Abrir no GitHub</a></p>`;
   }
 }
 

@@ -1,0 +1,44 @@
+name: Deploy to Vultr
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-relatorios-hub
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Start SSH agent
+        uses: webfactory/ssh-agent@v0.9.1
+        with:
+          ssh-private-key: ${{ secrets.VULTR_DEPLOY_KEY }}
+
+      - name: Trust Vultr host key
+        run: ssh-keyscan -H 216.238.113.48 >> ~/.ssh/known_hosts
+
+      - name: Sync static files
+        run: |
+          rsync -az --delete \
+            --exclude '.git/' \
+            --exclude '.github/' \
+            --exclude 'deploy/' \
+            ./ deploy@216.238.113.48:/var/www/relatorios-hub/current/
+
+      - name: Validate remote deployment
+        run: |
+          ssh deploy@216.238.113.48 "test -f /var/www/relatorios-hub/current/index.html && \
+            test -f /var/www/relatorios-hub/current/marked.min.js && \
+            test -d /var/www/relatorios-hub/current/docs"
