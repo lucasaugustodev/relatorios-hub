@@ -688,7 +688,7 @@ function render(searchQuery = '') {
     filtered.forEach(item => {
       const escapedTitle = item.title.replace(/'/g, "\\'");
       html += `
-        <a class="report-card" onclick="openReport('${item.file}', '${escapedTitle}')">
+        <div class="report-card" onclick="openReport('${item.file}', '${escapedTitle}')">
           <div class="report-icon ${item.icon}">${item.emoji}</div>
           <div class="report-body">
             <h3>${item.title}</h3>
@@ -701,7 +701,7 @@ function render(searchQuery = '') {
               </a>
             </div>
           </div>
-        </a>`;
+        </div>`;
     });
     html += '</div>';
   });
